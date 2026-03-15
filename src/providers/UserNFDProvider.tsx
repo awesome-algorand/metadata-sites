@@ -1,26 +1,22 @@
-import React, { createContext, useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { NfdApiClient, type Nfd } from '@txnlab/nfd-sdk'
 import { useWallet, useNetwork } from '@txnlab/use-wallet-react'
+import { UserNFDContext } from "../contexts"
 
-export interface UserNFDContextType {
-  userNfd: Nfd | null
-  isLoading: boolean
-}
-
-export const UserNFDContext = createContext<UserNFDContextType | undefined>(undefined)
 
 export const UserNFDProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { activeAddress } = useWallet()
   const { activeNetwork } = useNetwork()
+
   const [userNfd, setUserNfd] = useState<Nfd | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (activeAddress) {
       const nfdApi = activeNetwork === 'mainnet' ? NfdApiClient.mainNet() : NfdApiClient.testNet()
-      setIsLoading(true)
-      nfdApi.reverseLookup([activeAddress]).then((nfds) => {
+      nfdApi.reverseLookup([activeAddress], {view: "full"}).then((nfds) => {
         if (nfds && nfds[activeAddress]) {
           setUserNfd(nfds[activeAddress])
         } else {
@@ -30,15 +26,13 @@ export const UserNFDProvider: React.FC<{ children: ReactNode }> = ({ children })
       }).catch(() => {
         setUserNfd(null)
         setIsLoading(false)
+        setError(new Error('Failed to fetch NFD'))
       })
-    } else {
-      setUserNfd(null)
-      setIsLoading(false)
     }
-  }, [activeAddress])
+  }, [activeAddress, activeNetwork])
 
   return (
-    <UserNFDContext.Provider value={{ userNfd, isLoading }}>
+    <UserNFDContext.Provider value={{ nfd: userNfd, isLoading, error }}>
       {children}
     </UserNFDContext.Provider>
   )

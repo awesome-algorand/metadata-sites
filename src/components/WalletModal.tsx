@@ -17,8 +17,8 @@ type ModalScreen = 'connect' | 'account' | 'confirmation'
 export const WalletModal: React.FC = () => {
   const { wallets, activeAddress, activeWallet, algodClient, signTransactions } = useWallet()
   const { activeNetworkConfig, activeNetwork } = useNetwork()
-  const { siteNfd } = useSiteNFD()
-  const { userNfd } = useUserNFD()
+  const { nfd: siteNfd } = useSiteNFD()
+  const { nfd: userNfd } = useUserNFD()
   const { isOpen, initialTipAmount, closeModal } = useModal()
   
   const [screen, setScreen] = useState<ModalScreen>('connect')
@@ -40,6 +40,7 @@ export const WalletModal: React.FC = () => {
       setBalance(Number(accountInfo.amount))
     } catch (error) {
       // Failed to fetch balance
+      console.error('Failed to fetch balance:', error)
     }
   }, [activeAddress, algodClient])
 
@@ -48,24 +49,24 @@ export const WalletModal: React.FC = () => {
     try {
       const { token, baseServer } = activeNetworkConfig.algod
       const indexerHost = baseServer.replace('api', 'idx')
-      const indexerClient = new algosdk.Indexer(token as any, indexerHost, 443)
+      const indexerClient = new algosdk.Indexer(token as string, indexerHost, 443)
 
       const response = await indexerClient.lookupAccountTransactions(activeAddress)
         .do()
       const formattedTransactions: Transaction[] = response.transactions
-        .filter((tx: any) => {
-          const payment = tx['payment-transaction'] || tx.paymentTransaction
+        .filter((tx) => {
+          const payment = tx.paymentTransaction
           return payment?.receiver === siteNfd.depositAccount && tx.sender === activeAddress
         })
         .slice(0, 4)
-        .map((tx: any) => {
-          const payment = tx['payment-transaction'] || tx.paymentTransaction
+        .map((tx) => {
+          const payment = tx.paymentTransaction
           const amount = payment?.amount || 0
-          const round = tx['confirmed-round'] || tx.confirmedRound
-          const time = tx['round-time'] || tx.roundTime
+          const round = tx.confirmedRound
+          const time = tx.roundTime as number
           
           return {
-            id: tx.id,
+            id: tx.id as string,
             amount: Number(amount),
             round: Number(round),
             timestamp: new Date(time * 1000).toISOString()
@@ -75,6 +76,7 @@ export const WalletModal: React.FC = () => {
       setTransactions(formattedTransactions)
     } catch (error) {
       // Failed to fetch transactions
+      console.error('Failed to fetch transactions:', error)
     }
   }, [activeAddress, siteNfd?.depositAccount, activeNetworkConfig.algod])
 
@@ -129,7 +131,7 @@ export const WalletModal: React.FC = () => {
       const signedTransactions = await signTransactions([encodedTransaction])
       const response = await algodClient.sendRawTransaction(signedTransactions as Uint8Array[]).do()
       
-      const txid = (response as any).txId || response.txid
+      const txid = response.txid
       await algosdk.waitForConfirmation(algodClient, txid, 4)
 
       setTxId(txid)
@@ -140,6 +142,7 @@ export const WalletModal: React.FC = () => {
       fetchTransactions()
     } catch (error) {
       alert('Failed to send tip.')
+      console.error('Failed to send tip:', error)
     } finally {
       setIsSending(false)
     }
@@ -148,18 +151,18 @@ export const WalletModal: React.FC = () => {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header-container">
-          {avatarUrl && <img src={avatarUrl} alt="" className="modal-mini-avatar" />}
-          <h2>{siteNfd?.name || 'NFD Profile'}</h2>
+    <div className="modal-overlay fixed inset-0 z-1000 flex items-start justify-center overflow-y-auto bg-black/70 py-10 backdrop-blur-sm" onClick={handleClose}>
+      <div className="modal-content relative mx-auto w-125 max-w-[calc(100%-40px)] rounded-2xl border border-border bg-bg p-8 text-center shadow-custom" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header-container mb-6 flex flex-col items-center gap-3 border-b border-border pb-6">
+          {avatarUrl && <img src={avatarUrl} alt="" className="modal-mini-avatar h-16 w-16 rounded-full border-2 border-accent object-cover shadow-custom" />}
+          <h2 className="mt-0 text-2xl font-semibold text-text-h">{siteNfd?.name || 'NFD Profile'}</h2>
         </div>
 
         {screen === 'connect' && (
-          <div className="connect-screen">
-            <h3>Connect Wallet</h3>
-            <p>Please connect your wallet to proceed.</p>
-            <div className="wallet-buttons">
+          <div className="connect-screen text-center">
+            <h3 className="mt-0 mb-4 text-xl font-semibold text-text-h">Connect Wallet</h3>
+            <p className="text-text">Please connect your wallet to proceed.</p>
+            <div className="wallet-buttons mt-6 flex flex-wrap justify-center gap-3">
               {wallets?.map((wallet) => (
                 <button
                   key={wallet.id}
@@ -180,20 +183,20 @@ export const WalletModal: React.FC = () => {
         )}
 
         {screen === 'account' && (
-          <div className="account-screen">
-            <div className="user-profile">
-              <p><strong>Address:</strong> {activeAddress?.slice(0, 8)}...{activeAddress?.slice(-8)}</p>
-              {userNfd && <p><strong>NFD:</strong> {userNfd.name}</p>}
-              <p><strong>Balance:</strong> {(balance / 1000000).toLocaleString()} ALGO</p>
+          <div className="account-screen text-left">
+            <div className="user-profile mb-6 space-y-1">
+              <p className="text-text"><strong className="text-text-h">Address:</strong> {activeAddress?.slice(0, 8)}...{activeAddress?.slice(-8)}</p>
+              {userNfd && <p className="text-text"><strong className="text-text-h">NFD:</strong> {userNfd.name}</p>}
+              <p className="text-text"><strong className="text-text-h">Balance:</strong> {(balance / 1000000).toLocaleString()} ALGO</p>
             </div>
             
-            <div className="tip-prefill">
-              <h3>Send Tip to {siteNfd?.name}</h3>
-              <div className="tip-quick-options">
+            <div className="tip-prefill mt-8 border-t border-border pt-6">
+              <h3 className="mt-0 mb-4 text-center text-lg font-semibold text-text-h">Send Tip to {siteNfd?.name}</h3>
+              <div className="tip-quick-options flex justify-center gap-3">
                 {[1, 10, 100].map((algoAmount) => (
                   <button
                     key={algoAmount}
-                    className={`counter tip-button ${tipAmount === algoAmount * 1000000 ? 'active' : ''}`}
+                    className={`counter tip-button min-w-25 font-bold ${tipAmount === algoAmount * 1000000 ? 'bg-accent! text-white! border-accent!' : ''}`}
                     onClick={() => {
                       setTipAmount(algoAmount * 1000000)
                       setCustomAmountStr(algoAmount.toString())
@@ -203,7 +206,7 @@ export const WalletModal: React.FC = () => {
                   </button>
                 ))}
               </div>
-              <div className="custom-input-group">
+              <div className="custom-input-group flex items-center justify-center gap-4 mt-2">
                 <input
                   type="number"
                   placeholder="Custom ALGO"
@@ -217,10 +220,10 @@ export const WalletModal: React.FC = () => {
                       setTipAmount(null)
                     }
                   }}
-                  className="custom-amount-input"
+                  className="custom-amount-input rounded-md border border-border bg-code-bg px-4 py-2 font-mono text-text-h outline-none focus:border-accent"
                 />
                 <button
-                  className="counter"
+                  className="counter mb-0"
                   onClick={() => {
                     if (tipAmount && tipAmount > 0) {
                       sendTip(tipAmount)
@@ -233,82 +236,82 @@ export const WalletModal: React.FC = () => {
               </div>
             </div>
 
-            <div className="transaction-history">
-              <h3>Recent Tips Sent</h3>
+            <div className="transaction-history mt-8 border-t border-border pt-6">
+              <h3 className="mt-0 mb-4 text-lg font-semibold text-text-h">Recent Tips Sent</h3>
               {transactions.length > 0 ? (
-                <ul>
+                <ul className="list-none p-0 m-0 space-y-2">
                   {transactions.slice(0, 5).map(tx => (
                     <li key={tx.id}>
                       <a 
                         href={`https://lora.algokit.io/${activeNetwork === 'mainnet' ? 'mainnet' : 'testnet'}/transaction/${tx.id}`} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="tx-history-link"
+                        className="block rounded-lg border border-border bg-social-bg p-3 transition-shadow hover:shadow-custom"
                       >
-                        <div className="tx-history-item">
-                          <span className="tx-history-amount">{tx.amount / 1000000} ALGO</span>
-                          <span className="tx-history-date">{new Date(tx.timestamp).toLocaleDateString()}</span>
+                        <div className="tx-history-item flex items-center justify-between">
+                          <span className="tx-history-amount font-bold text-accent">{tx.amount / 1000000} ALGO</span>
+                          <span className="tx-history-date text-sm text-text-dim">{new Date(tx.timestamp).toLocaleDateString()}</span>
                         </div>
                       </a>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p>No recent tips found.</p>
+                <p className="text-center text-text-dim">No recent tips found.</p>
               )}
             </div>
           </div>
         )}
 
         {screen === 'confirmation' && (
-          <div className="confirmation-screen">
-            <div className="success-icon">✓</div>
-            <h2>Tip Sent!</h2>
+          <div className="confirmation-screen flex flex-col items-center">
+            <div className="success-icon mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#4caf50] text-3xl text-white shadow-[0_4px_12px_rgba(76,175,80,0.3)]">✓</div>
+            <h2 className="mt-0 mb-6 text-2xl font-bold text-text-h text-center">Tip Sent!</h2>
             
-            <div className="tx-details">
-              <div className="tx-amount">
-                <span className="amount-value">{(sentAmount || 0) / 1000000}</span>
-                <span className="amount-unit">ALGO</span>
+            <div className="tx-details mb-6 w-full rounded-xl border border-border bg-social-bg p-6">
+              <div className="tx-amount mb-8 text-center">
+                <span className="amount-value block text-[2.5rem] font-bold text-accent">{(sentAmount || 0) / 1000000}</span>
+                <span className="amount-unit text-base tracking-widest text-text-dim uppercase">ALGO</span>
               </div>
 
-              <div className="tx-participants">
-                <div className="participant">
-                  <span className="participant-label">From</span>
-                  <div className="participant-info">
+              <div className="tx-participants mb-8 flex items-center justify-between gap-4">
+                <div className="participant flex flex-1 flex-col gap-2 text-left">
+                  <span className="participant-label text-xs tracking-wider text-text-dim uppercase">From</span>
+                  <div className="participant-info flex items-center gap-3">
                     {userNfd?.properties?.userDefined?.avatar || userNfd?.properties?.verified?.avatar ? (
-                      <img src={userNfd?.properties?.userDefined?.avatar || userNfd?.properties?.verified?.avatar} alt="" className="mini-avatar" />
+                      <img src={userNfd?.properties?.userDefined?.avatar || userNfd?.properties?.verified?.avatar} alt="" className="mini-avatar h-10 w-10 rounded-full border-2 border-border object-cover" />
                     ) : (
-                      <div className="mini-avatar-placeholder" />
+                      <div className="mini-avatar-placeholder h-10 w-10 rounded-full bg-border" />
                     )}
-                    <div className="participant-details">
-                      <span className="participant-name">{userNfd?.name || 'You'}</span>
-                      <span className="participant-address">{activeAddress?.slice(0, 4)}...{activeAddress?.slice(-4)}</span>
+                    <div className="participant-details flex flex-col min-w-0">
+                      <span className="participant-name truncate font-semibold text-text-h">{userNfd?.name || 'You'}</span>
+                      <span className="participant-address text-xs text-text-dim">{activeAddress?.slice(0, 4)}...{activeAddress?.slice(-4)}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="tx-arrow">→</div>
+                <div className="tx-arrow text-xl text-text-dim">→</div>
 
-                <div className="participant">
-                  <span className="participant-label">To</span>
-                  <div className="participant-info">
+                <div className="participant flex flex-1 flex-col gap-2 text-left">
+                  <span className="participant-label text-xs tracking-wider text-text-dim uppercase">To</span>
+                  <div className="participant-info flex items-center gap-3">
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt="" className="mini-avatar" />
+                      <img src={avatarUrl} alt="" className="mini-avatar h-10 w-10 rounded-full border-2 border-border object-cover" />
                     ) : (
-                      <div className="mini-avatar-placeholder" />
+                      <div className="mini-avatar-placeholder h-10 w-10 rounded-full bg-border" />
                     )}
-                    <div className="participant-details">
-                      <span className="participant-name">{siteNfd?.name}</span>
-                      <span className="participant-address">{siteNfd?.depositAccount?.slice(0, 4)}...{siteNfd?.depositAccount?.slice(-4)}</span>
+                    <div className="participant-details flex flex-col min-w-0">
+                      <span className="participant-name truncate font-semibold text-text-h">{siteNfd?.name}</span>
+                      <span className="participant-address text-xs text-text-dim">{siteNfd?.depositAccount?.slice(0, 4)}...{siteNfd?.depositAccount?.slice(-4)}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {txId && (
-                <div className="tx-id-container">
-                  <span className="tx-id-label">Transaction ID</span>
-                  <a href={`https://lora.algokit.io/${activeNetwork === 'mainnet' ? 'mainnet' : 'testnet'}/transaction/${txId}`} target="_blank" rel="noreferrer" className="tx-id-link">
+                <div className="tx-id-container flex flex-col items-center border-t border-border pt-4">
+                  <span className="tx-id-label mb-1 text-xs tracking-wider text-text-dim uppercase">Transaction ID</span>
+                  <a href={`https://lora.algokit.io/${activeNetwork === 'mainnet' ? 'mainnet' : 'testnet'}/transaction/${txId}`} target="_blank" rel="noreferrer" className="truncate text-sm font-bold text-accent hover:underline">
                     {txId.slice(0, 12)}...{txId.slice(-12)}
                   </a>
                 </div>
@@ -317,7 +320,7 @@ export const WalletModal: React.FC = () => {
           </div>
         )}
 
-        <button className="counter cancel-button" onClick={handleClose}>
+        <button className="counter cancel-button mt-6 bg-social-bg text-text" onClick={handleClose}>
           {screen === 'confirmation' ? 'Done' : 'Cancel'}
         </button>
       </div>

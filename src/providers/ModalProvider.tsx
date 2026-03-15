@@ -1,14 +1,6 @@
-import React, { createContext, useState } from 'react'
+import React, { useState } from 'react'
 import type { ReactNode } from 'react'
-
-interface ModalContextType {
-  isOpen: boolean
-  initialTipAmount: number | undefined
-  openModal: (tipAmount?: number) => void
-  closeModal: () => void
-}
-
-export const ModalContext = createContext<ModalContextType | undefined>(undefined)
+import { ModalContext } from "../contexts"
 
 export const ModalProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)

@@ -1,16 +1,9 @@
-import React, { createContext, useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { NfdApiClient, type Nfd } from '@txnlab/nfd-sdk'
 
 import { useNetwork } from '@txnlab/use-wallet-react'
-
-export interface SiteNFDContextType {
-  siteNfd: Nfd | null
-  isLoading: boolean
-  error: Error | null
-}
-
-export const SiteNFDContext = createContext<SiteNFDContextType | undefined>(undefined)
+import { SiteNFDContext } from "../contexts"
 
 export const SiteNFDProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { activeNetwork } = useNetwork()
@@ -28,33 +21,19 @@ export const SiteNFDProvider: React.FC<{ children: ReactNode }> = ({ children })
     } else if (hostname.endsWith('.algo')) {
       nfdToLookup = hostname
     }
-
-    setIsLoading(true)
     nfdApi.resolve(nfdToLookup, {view: "full"})
       .then((nfd) => {
         setSiteNfd(nfd)
         setIsLoading(false)
       })
       .catch((err) => {
-        if (nfdToLookup !== 'shoretech.algo') {
-          nfdApi.resolve('shoretech.algo')
-            .then((nfd) => {
-              setSiteNfd(nfd)
-              setIsLoading(false)
-            })
-            .catch((e) => {
-              setError(e)
-              setIsLoading(false)
-            })
-        } else {
           setError(err)
           setIsLoading(false)
-        }
       })
-  }, [])
+  }, [activeNetwork])
 
   return (
-    <SiteNFDContext.Provider value={{ siteNfd, isLoading, error }}>
+    <SiteNFDContext.Provider value={{ nfd: siteNfd, isLoading, error }}>
       {children}
     </SiteNFDContext.Provider>
   )

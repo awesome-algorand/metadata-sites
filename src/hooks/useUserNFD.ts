@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { UserNFDContext } from '../providers/UserNFDProvider'
+import { UserNFDContext } from '../contexts.ts'
 
 export const useUserNFD = () => {
   const context = useContext(UserNFDContext)

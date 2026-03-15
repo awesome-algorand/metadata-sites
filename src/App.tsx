@@ -6,10 +6,9 @@ import { Footer } from './components/Footer'
 import { WalletModal } from './components/WalletModal'
 import { useSiteNFD } from './hooks/useSiteNFD'
 import { useEffect } from 'react'
-import './App.css'
 
 function App() {
-  const { siteNfd } = useSiteNFD()
+  const { nfd: siteNfd } = useSiteNFD()
 
   useEffect(() => {
     document.title = window.location.hostname
@@ -44,13 +43,13 @@ function App() {
   return (
     <>
       <Header />
-      <section id="center">
+      <section id="center" className="flex flex-col items-center gap-6 overflow-y-auto px-5 py-10 lg:gap-6.25 lg:px-0 lg:pt-10 lg:pb-0 grow [scrollbar-gutter:stable]">
         <ProfileHero />
-        <div>
+        <div className="w-full">
           <ProfileAbout />
           <TippingActions />
         </div>
-        <div className="ticks"></div>
+        <div className="ticks fade-in relative w-full before:absolute before:top-[-4.5px] before:left-0 before:border-[5px] before:border-transparent before:border-l-border after:absolute after:top-[-4.5px] after:right-0 after:border-[5px] after:border-transparent after:border-r-border"></div>
         <Footer />
       </section>
       <WalletModal />
