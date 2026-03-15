@@ -78,6 +78,15 @@ export const WalletModal: React.FC = () => {
     }
   }, [activeAddress, siteNfd?.depositAccount, activeNetworkConfig.algod])
 
+  const handleClose = useCallback(() => {
+    closeModal()
+    // Reset screen to account (if connected) or connect (if not)
+    setScreen(activeAddress ? 'account' : 'connect')
+    // Reset other states
+    setTxId(null)
+    setSentAmount(null)
+  }, [closeModal, activeAddress])
+
   useEffect(() => {
     if (activeAddress) {
       setScreen('account')
@@ -139,7 +148,7 @@ export const WalletModal: React.FC = () => {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={closeModal}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header-container">
           {avatarUrl && <img src={avatarUrl} alt="" className="modal-mini-avatar" />}
@@ -308,7 +317,7 @@ export const WalletModal: React.FC = () => {
           </div>
         )}
 
-        <button className="counter cancel-button" onClick={closeModal}>
+        <button className="counter cancel-button" onClick={handleClose}>
           {screen === 'confirmation' ? 'Done' : 'Cancel'}
         </button>
       </div>

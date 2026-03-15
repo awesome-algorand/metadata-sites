@@ -8,12 +8,11 @@ export const ProfileAbout: React.FC = () => {
 
   const bio = siteNfd?.properties?.userDefined?.bio || siteNfd?.properties?.verified?.bio
   const userDefinedProperties = siteNfd?.properties?.userDefined
-    ? Object.entries(siteNfd.properties.userDefined).filter(([key]) => !['avatar', 'banner', 'bio', 'dns'].includes(key.toLowerCase()))
+    ? Object.entries(siteNfd.properties.userDefined).filter(([key]) => !['avatar', 'banner', 'bio', 'dns', 'name'].includes(key.toLowerCase()))
     : []
 
   return (
     <div className="fade-in">
-      <h1>{siteNfd?.name || 'NFD Profile'}</h1>
       {bio && <p className="bio">{bio}</p>}
 
       {userDefinedProperties.length > 0 && (

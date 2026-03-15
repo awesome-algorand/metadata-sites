@@ -11,6 +11,7 @@ export const ProfileHero: React.FC = () => {
 
   const avatarUrl = siteNfd?.properties?.userDefined?.avatar || siteNfd?.properties?.verified?.avatar
   const bannerUrl = siteNfd?.properties?.userDefined?.banner || siteNfd?.properties?.verified?.banner
+  const metadataName = siteNfd?.properties?.userDefined?.name
 
   return (
     <div className="fade-in">
@@ -30,6 +31,7 @@ export const ProfileHero: React.FC = () => {
           </>
         )}
       </div>
+      <h1 className="hero-name">{metadataName || siteNfd?.name || 'NFD Profile'}</h1>
     </div>
   )
 }
