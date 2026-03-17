@@ -4,10 +4,10 @@ import { useSiteNFD } from '../hooks/useSiteNFD'
 export const ProfileAbout: React.FC = () => {
   const { nfd: siteNfd, isLoading } = useSiteNFD()
   
-  if (isLoading) return null
+  if (isLoading || !siteNfd) return null
 
-  const bio = siteNfd?.properties?.userDefined?.bio || siteNfd?.properties?.verified?.bio
-  const userDefinedProperties = siteNfd?.properties?.userDefined
+  const bio = siteNfd.properties?.userDefined?.bio || siteNfd.properties?.verified?.bio
+  const userDefinedProperties = siteNfd.properties?.userDefined
     ? Object.entries(siteNfd.properties.userDefined).filter(([key]) => !['avatar', 'banner', 'bio', 'dns', 'name'].includes(key.toLowerCase()))
     : []
 
