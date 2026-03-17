@@ -8,7 +8,7 @@ export const ProfileAbout: React.FC = () => {
 
   const bio = siteNfd.properties?.userDefined?.bio || siteNfd.properties?.verified?.bio
   const userDefinedProperties = siteNfd.properties?.userDefined
-    ? Object.entries(siteNfd.properties.userDefined).filter(([key]) => !['avatar', 'banner', 'bio', 'dns', 'name'].includes(key.toLowerCase()))
+    ? Object.entries(siteNfd.properties.userDefined).filter(([key]) => !['avatar', 'banner', 'bio', 'dns', 'name', 'redirectto'].includes(key.toLowerCase()))
     : []
 
   return (

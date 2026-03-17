@@ -9,6 +9,7 @@ It is a basic React site built with **Vite** that shows the details of the NFD c
 - Display details of the NFD contract.
 - Integration with NFD SDK.
 - Wallet connection support via use-wallet.
+- **Redirection Support:** Automatically navigate to a URL specified in the `redirectTo` metadata field.
 
 ## Tech Stack
 
@@ -16,6 +17,18 @@ It is a basic React site built with **Vite** that shows the details of the NFD c
 - **Build Tool:** Vite
 - **NFD Integration:** NFD SDK
 - **Wallet Connection:** use-wallet
+
+## Redirection
+
+The site supports a special `redirectTo` metadata field. If an NFD has this property set in its **User Defined** metadata, the site will automatically redirect visitors to the specified URL.
+
+This is useful for using your NFD as a short-link or for redirecting to a personal website, social profile, or another decentralized page.
+
+### How to use:
+1. Go to [NF.Domains](https://nf.domains).
+2. Manage your NFD.
+3. Add a **User Defined** property with the key `redirectTo`.
+4. Set the value to the full URL (including `https://`) you want to redirect to.
 
 ## Getting Started
 

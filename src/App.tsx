@@ -38,6 +38,11 @@ function App() {
       const metadataName = siteNfd.properties?.userDefined?.name
       document.title = metadataName ? `${metadataName} - ${siteNfd.name}` : siteNfd.name
     }
+
+    const redirectTo = siteNfd.properties?.userDefined?.redirectTo
+    if (redirectTo) {
+      window.location.href = redirectTo
+    }
   }, [siteNfd])
 
   return (
