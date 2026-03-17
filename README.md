@@ -107,6 +107,10 @@ sudo ln -s /snap/bin/certbot /usr/bin/certbot
 sudo certbot --nginx -d shoretech.algo.xyz
 ```
 
+## License
+
+This project is released under the [Unlicense](./LICENSE).
+
 ## Disclaimer
 
 This project is not affiliated with NF Domains. It is an independent project created for informational and development purposes.
